@@ -70,7 +70,7 @@ static int get_image(mlt_frame a_frame,
     int normalized_height = profile->height;
     // Flag to avoid applying PAR normalization twice: set true whenever we
     // intentionally set b_width/b_height to consumer/profile/requested values.
-    bool already_normalized = false;
+    bool parAlreadyNormalized = false;
     
     // reference rect
     mlt_rect rect = {0, 0, (double) normalized_width, (double) normalized_height, 1.0};
@@ -90,7 +90,7 @@ static int get_image(mlt_frame a_frame,
     if (b_height == 0) {
         b_width = *width;
         b_height = *height;
-        already_normalized = true;
+        parAlreadyNormalized = true;
     }
     // Special case - aspect_ratio = 0
     if (mlt_frame_get_aspect_ratio(b_frame) == 0) {
@@ -116,7 +116,7 @@ static int get_image(mlt_frame a_frame,
         }
         b_width = *width;
         b_height = *height;
-        already_normalized = true;
+        parAlreadyNormalized = true;
     }
 
     if (mlt_properties_get(transition_properties, "rect")) {
@@ -129,10 +129,10 @@ static int get_image(mlt_frame a_frame,
             rect.h *= normalized_height;
         }
      } else {
-           // Optimization, request profile sized image
-           b_width = normalized_width;
-           b_height = normalized_height;
-           already_normalized = true;
+            // Optimization, request profile sized image
+            b_width = normalized_width;
+            b_height = normalized_height;
+            parAlreadyNormalized = true;
     }
     int request_width = *width;
     int request_height = *height;
@@ -171,7 +171,7 @@ static int get_image(mlt_frame a_frame,
     if (b_width <= 0 || b_height <= 0) {
         b_width = normalized_width;
         b_height = normalized_height;
-        already_normalized = true;
+        parAlreadyNormalized = true;
     }
     
     // Ensure we don't request an image with a 0 width or height
@@ -179,7 +179,7 @@ static int get_image(mlt_frame a_frame,
     b_height = qMax(1, b_height);
 
     // If we didn't before, normalize source dimensions to consumer PAR to handle anamorphic sources
-    if (!already_normalized) {
+    if (!parAlreadyNormalized) {
         normalize_mlt_source_size(b_ar, consumer_ar, &b_width, b_height);
     }
 
