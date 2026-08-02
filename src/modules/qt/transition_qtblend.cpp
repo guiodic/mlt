@@ -128,11 +128,11 @@ static int get_image(mlt_frame a_frame,
             rect.w *= normalized_width;
             rect.h *= normalized_height;
         }
-     } else {
-            // Optimization, request profile sized image
-            b_width = normalized_width;
-            b_height = normalized_height;
-            parAlreadyNormalized = true;
+    } else {
+        // Optimization, request profile sized image
+        b_width = normalized_width;
+        b_height = normalized_height;
+        parAlreadyNormalized = true;
     }
     int request_width = *width;
     int request_height = *height;
