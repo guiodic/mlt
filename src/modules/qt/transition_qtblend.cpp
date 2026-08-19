@@ -323,7 +323,7 @@ static int get_image(mlt_frame a_frame,
     uint8_t *a_image = NULL;
     error = mlt_frame_get_image(a_frame, &a_image, format, width, height, 1);
     if (error || !a_image) {
-        return error;
+        return error ? error : 1;
     }
     *image = a_image;
 
