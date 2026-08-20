@@ -319,18 +319,15 @@ static int get_image(mlt_frame a_frame,
         transform.scale(scale, scale);
     }
 
-    // Get bottom frame
+    // Request a writable image buffer from a_frame to perform direct in-place compositing,
+    // avoiding redundant mlt_pool_alloc and full-frame memcpy operations. Buffer ownership
+    // remains managed by a_frame.
     uint8_t *a_image = NULL;
-    error = mlt_frame_get_image(a_frame, &a_image, format, width, height, 0);
-    if (error) {
-        return error;
+    error = mlt_frame_get_image(a_frame, &a_image, format, width, height, 1);
+    if (error || !a_image) {
+        return error ? error : 1;
     }
-    // Prepare output image
-    int image_size = mlt_image_format_size(*format, *width, *height, NULL);
-    *image = (uint8_t *) mlt_pool_alloc(image_size);
-
-    // Copy bottom frame in output
-    memcpy(*image, a_image, image_size);
+    *image = a_image;
 
     // convert bottom mlt image to qimage
     QImage bottomImg;
@@ -349,7 +346,6 @@ static int get_image(mlt_frame a_frame,
     // finish Qt drawing
     painter.end();
     convert_qimage_to_mlt(&bottomImg, *image, *width, *height);
-    mlt_frame_set_image(a_frame, *image, image_size, mlt_pool_release);
     // Remove potentially large image on the B frame.
     mlt_frame_set_image(b_frame, NULL, 0, NULL);
     return error;

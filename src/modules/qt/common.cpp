@@ -73,9 +73,16 @@ mlt_image_format choose_image_format(mlt_image_format format)
 
 void convert_qimage_to_mlt(QImage *qImg, uint8_t *mImg, int width, int height)
 {
-    // Destination pointer must be the same pointer that was provided to
-    // convert_mlt_to_qimage()
-    Q_ASSERT(mImg == qImg->constBits());
+    // Normally, QPainter draws directly in-place into the MLT frame buffer (mImg) provided
+    // to convert_mlt_to_qimage(). However, if Qt detaches the QImage during painting or formatting,
+    // constBits() will no longer match mImg. Perform a runtime check (which remains active in Release
+    // builds) and fallback to copying pixels if a detach occurred.
+    if (qImg->constBits() != mImg) {
+        mlt_image_format format = (qImg->format() == QImage::Format_RGBA64) ? mlt_image_rgba64
+                                                                            : mlt_image_rgba;
+        int size = mlt_image_format_size(format, width, height, NULL);
+        memcpy(mImg, qImg->constBits(), size);
+    }
 }
 
 void convert_mlt_to_qimage(
