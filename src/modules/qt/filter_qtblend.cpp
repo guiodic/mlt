@@ -272,9 +272,14 @@ static int filter_get_image(mlt_frame frame,
     QPainter::CompositionMode mode
         = (QPainter::CompositionMode) mlt_properties_get_int(properties, "compositing");
 
-    bool coversFullFrame = (rect.x == 0 && rect.y == 0 && rect.w == *width && rect.h == *height
-                            && angle == 0.0 && opacity == 1.0);
-    bool fillsRect = distort || (rect.w == b_width * scale && rect.h == b_height * scale);
+    bool coversFullFrame = (qFuzzyIsNull(rect.x) && qFuzzyIsNull(rect.y)
+                            && qFuzzyCompare(rect.w, static_cast<double>(*width))
+                            && qFuzzyCompare(rect.h, static_cast<double>(*height))
+                            && qFuzzyIsNull(angle)
+                            && qFuzzyCompare(opacity, 1.0));
+    bool fillsRect = distort
+        || (qFuzzyCompare(rect.w, b_width * scale)
+            && qFuzzyCompare(rect.h, b_height * scale));
     bool coversFullDest = coversFullFrame && fillsRect;
 
     bool needsFill = true;
