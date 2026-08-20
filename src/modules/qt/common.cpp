@@ -75,8 +75,8 @@ void convert_qimage_to_mlt(QImage *qImg, uint8_t *mImg, int width, int height)
 {
     // Normally, QPainter draws directly in-place into the MLT frame buffer (mImg) provided
     // to convert_mlt_to_qimage(). However, if Qt detaches the QImage during painting or formatting,
-    // constBits() will no longer match mImg. Perform a runtime check and fallback to copying pixels 
-    // if a detach occurred.
+    // constBits() will no longer match mImg. Perform a runtime check (which remains active in Release
+    // builds) and fallback to copying pixels if a detach occurred.
     if (qImg->constBits() != mImg) {
         mlt_image_format format = (qImg->format() == QImage::Format_RGBA64) ? mlt_image_rgba64
                                                                             : mlt_image_rgba;

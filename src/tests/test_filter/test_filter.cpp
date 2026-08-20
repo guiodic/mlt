@@ -71,6 +71,50 @@ private Q_SLOTS:
 
         delete frame;
     }
+
+    void QtBlendCoverageEdgeCases()
+    {
+        Profile profile("hdv_1080_25p");
+        Producer producer(profile, "color", "red");
+        Filter filter(profile, "qtblend");
+
+        // Test small non-zero rotation angle
+        filter.set("rotation", 0.0001);
+        Frame *frame1 = producer.get_frame();
+        QVERIFY(frame1 != NULL);
+        filter.process(*frame1);
+        int width = 1920;
+        int height = 1080;
+        mlt_image_format format = mlt_image_rgba;
+        uint8_t *img1 = frame1->get_image(format, width, height, 0);
+        QVERIFY(img1 != NULL);
+        delete frame1;
+
+        // Test small non-1.0 opacity
+        filter.set("rotation", 0.0);
+        filter.set("rect", "0 0 100% 100% 0.999");
+        Frame *frame2 = producer.get_frame();
+        QVERIFY(frame2 != NULL);
+        filter.process(*frame2);
+        width = 1920;
+        height = 1080;
+        format = mlt_image_rgba;
+        uint8_t *img2 = frame2->get_image(format, width, height, 0);
+        QVERIFY(img2 != NULL);
+        delete frame2;
+
+        // Test small non-zero rect offset x/y
+        filter.set("rect", "0.001 0.001 100% 100% 1.0");
+        Frame *frame3 = producer.get_frame();
+        QVERIFY(frame3 != NULL);
+        filter.process(*frame3);
+        width = 1920;
+        height = 1080;
+        format = mlt_image_rgba;
+        uint8_t *img3 = frame3->get_image(format, width, height, 0);
+        QVERIFY(img3 != NULL);
+        delete frame3;
+    }
 };
 
 QTEST_APPLESS_MAIN(TestFilter)
