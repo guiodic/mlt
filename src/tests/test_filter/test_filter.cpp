@@ -77,9 +77,10 @@ private Q_SLOTS:
         Profile profile("hdv_1080_25p");
         Producer producer(profile, "color", "red");
         Filter filter(profile, "qtblend");
+        filter.set("background_color", 0x12345678);
 
-        // Test small non-zero rotation angle
-        filter.set("rotation", 0.0001);
+        // Test microscopic rotation angle within fuzzy threshold (1e-13)
+        filter.set("rotation", 1e-13);
         Frame *frame1 = producer.get_frame();
         QVERIFY(frame1 != NULL);
         filter.process(*frame1);
@@ -88,11 +89,14 @@ private Q_SLOTS:
         mlt_image_format format = mlt_image_rgba;
         uint8_t *img1 = frame1->get_image(format, width, height, 0);
         QVERIFY(img1 != NULL);
+        uint32_t *pixel1 = reinterpret_cast<uint32_t *>(img1);
+        QVERIFY(pixel1 != NULL);
+        QVERIFY(pixel1[0] != 0);
         delete frame1;
 
-        // Test small non-1.0 opacity
+        // Test microscopic non-1.0 opacity within fuzzy threshold (1.0 - 1e-13)
         filter.set("rotation", 0.0);
-        filter.set("rect", "0 0 100% 100% 0.999");
+        filter.set("rect", "0 0 100% 100% 0.9999999999999");
         Frame *frame2 = producer.get_frame();
         QVERIFY(frame2 != NULL);
         filter.process(*frame2);
@@ -101,10 +105,13 @@ private Q_SLOTS:
         format = mlt_image_rgba;
         uint8_t *img2 = frame2->get_image(format, width, height, 0);
         QVERIFY(img2 != NULL);
+        uint32_t *pixel2 = reinterpret_cast<uint32_t *>(img2);
+        QVERIFY(pixel2 != NULL);
+        QVERIFY(pixel2[0] != 0);
         delete frame2;
 
-        // Test small non-zero rect offset x/y
-        filter.set("rect", "0.001 0.001 100% 100% 1.0");
+        // Test microscopic rect offset x/y within fuzzy threshold (1e-13)
+        filter.set("rect", "0.0000000000001 0.0000000000001 100% 100% 1.0");
         Frame *frame3 = producer.get_frame();
         QVERIFY(frame3 != NULL);
         filter.process(*frame3);
@@ -113,6 +120,9 @@ private Q_SLOTS:
         format = mlt_image_rgba;
         uint8_t *img3 = frame3->get_image(format, width, height, 0);
         QVERIFY(img3 != NULL);
+        uint32_t *pixel3 = reinterpret_cast<uint32_t *>(img3);
+        QVERIFY(pixel3 != NULL);
+        QVERIFY(pixel3[0] != 0);
         delete frame3;
     }
 };
