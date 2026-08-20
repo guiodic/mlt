@@ -186,8 +186,9 @@ static int filter_get_image(mlt_frame frame,
                || rect.w / b_dar < *height || rect.h * b_dar < *width || b_width != *width
                || b_height != *height;
 
+    double angle = 0.0;
     if (mlt_properties_get(properties, "rotation")) {
-        double angle = mlt_properties_anim_get_double(properties, "rotation", position, length);
+        angle = mlt_properties_anim_get_double(properties, "rotation", position, length);
         if (angle != 0.0) {
             if (mlt_properties_get(properties, "rotate_anchor")) {
                 mlt_rect anchor
@@ -244,12 +245,12 @@ static int filter_get_image(mlt_frame frame,
     bool hqPainting = interps && strcmp(interps, "nearest") && strcmp(interps, "neighbor");
 
     // resize to rect
+    double scale = 1.0;
     if (distort) {
         if (rect.w != b_width || rect.h != b_height) {
             transform.scale(rect.w / b_width, rect.h / b_height);
         }
     } else {
-        double scale;
         double resize_dar = rect.w * consumer_ar / rect.h;
         if (b_dar >= resize_dar) {
             scale = rect.w / b_width;
@@ -267,11 +268,34 @@ static int filter_get_image(mlt_frame frame,
 
     QImage destImage;
     convert_mlt_to_qimage(dest_image, &destImage, *width, *height, *format);
-    destImage.fill(mlt_properties_get_int(properties, "background_color"));
+
+    QPainter::CompositionMode mode
+        = (QPainter::CompositionMode) mlt_properties_get_int(properties, "compositing");
+
+    bool coversFullFrame = (rect.x == 0 && rect.y == 0 && rect.w == *width && rect.h == *height
+                            && angle == 0.0 && opacity == 1.0);
+    bool fillsRect = distort || (rect.w == b_width * scale && rect.h == b_height * scale);
+    bool coversFullDest = coversFullFrame && fillsRect;
+
+    bool needsFill = true;
+    if (coversFullDest) {
+        if (mode == QPainter::CompositionMode_Source) {
+            needsFill = false;
+        } else if (mode == QPainter::CompositionMode_SourceOver) {
+            struct mlt_image_s simg;
+            mlt_image_set_values(&simg, src_image, *format, b_width, b_height);
+            if (mlt_image_is_opaque(&simg)) {
+                needsFill = false;
+            }
+        }
+    }
+
+    if (needsFill) {
+        destImage.fill(mlt_properties_get_int(properties, "background_color"));
+    }
 
     QPainter painter(&destImage);
-    painter.setCompositionMode(
-        (QPainter::CompositionMode) mlt_properties_get_int(properties, "compositing"));
+    painter.setCompositionMode(mode);
     painter.setTransform(transform);
     painter.setOpacity(opacity);
     painter.setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform, hqPainting);
