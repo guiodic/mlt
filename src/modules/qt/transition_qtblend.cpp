@@ -319,7 +319,9 @@ static int get_image(mlt_frame a_frame,
         transform.scale(scale, scale);
     }
 
-    // Get bottom frame (request writable image so we can draw directly into it)
+    // Request a writable image buffer from a_frame to perform direct in-place compositing,
+    // avoiding redundant mlt_pool_alloc and full-frame memcpy operations. Buffer ownership
+    // remains managed by a_frame.
     uint8_t *a_image = NULL;
     error = mlt_frame_get_image(a_frame, &a_image, format, width, height, 1);
     if (error || !a_image) {
